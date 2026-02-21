@@ -71,9 +71,9 @@ class WSNM_Woo_Stock_Notify_Me_Admin
     public function custom_post_type()
     {
         $labels = array(
-            'name'               => __('Notify Me', 'back-in-stock-notifications-for-woocommerce'),
-            'singular_name'      => __('Notify Me', 'back-in-stock-notifications-for-woocommerce'),
-            'add_new'            => _x('Add New', 'Notify Me - Plugin', 'back-in-stock-notifications-for-woocommerce'),
+            'name'               => __('Back in Stock', 'back-in-stock-notifications-for-woocommerce'),
+            'singular_name'      => __('Back in Stock', 'back-in-stock-notifications-for-woocommerce'),
+            'add_new'            => _x('Add New', 'Back in Stock - Plugin', 'back-in-stock-notifications-for-woocommerce'),
             'add_new_item'       => __('Add New Subscription', 'back-in-stock-notifications-for-woocommerce'),
             'edit_item'          => __('Edit Subscription', 'back-in-stock-notifications-for-woocommerce'),
             'new_item'           => __('New Subscription', 'back-in-stock-notifications-for-woocommerce'),
@@ -82,7 +82,7 @@ class WSNM_Woo_Stock_Notify_Me_Admin
             'search_items'       => __('Search Subscription', 'back-in-stock-notifications-for-woocommerce'),
             'not_found'          => __('No Subscription found', 'back-in-stock-notifications-for-woocommerce'),
             'not_found_in_trash' => __('No Subscription found in the Trash', 'back-in-stock-notifications-for-woocommerce'),
-            'menu_name'          => __('Notify Me', 'back-in-stock-notifications-for-woocommerce')
+            'menu_name'          => __('Back in Stock', 'back-in-stock-notifications-for-woocommerce')
         );
         $args = array(
             'labels'            => $labels,
@@ -134,6 +134,12 @@ class WSNM_Woo_Stock_Notify_Me_Admin
         $last_name = $this->helper->get_last_name($post->ID);
         $email = $this->helper->get_email($post->ID);
         $status_html = $this->helper->get_notification_status_html($post->ID);
+
+        $hubspot_enabled    = get_option( 'wsnm_hubspot_enabled' ) === 'enabled';
+        $hubspot_contact_id = get_post_meta( $post->ID, 'wsnm_hubspot_contact_id', true );
+        $hubspot_synced_at  = get_post_meta( $post->ID, 'wsnm_hubspot_synced_at', true );
+        $hubspot_error      = get_post_meta( $post->ID, 'wsnm_hubspot_error', true );
+        $hubspot_portal_id  = get_option( 'wsnm_hubspot_portal_id', '' );
 
         require_once WSNM_PATH . 'admin/parts/notification-details.php';
     }
@@ -439,7 +445,13 @@ class WSNM_Woo_Stock_Notify_Me_Admin
         $screen = get_current_screen();
 
         if ($screen->post_type == 'product' && $screen->parent_base == 'edit' && isset($_GET['wsnm_product_tab']) && isset($_GET['wsnm_product_tab_content'])) {
-            echo sprintf('<script>jQuery(document).ready(function($){$(".%s a").trigger("click");$("html, body").animate({scrollTop: $("#%s").offset().top - 600}, "slow");})</script>', esc_js($_GET['wsnm_product_tab']), esc_js($_GET['wsnm_product_tab_content']));
+            $allowed_tabs    = [ 'wsnm-options_tab', 'inventory_tab', 'variations_tab' ];
+            $allowed_content = [ 'wsnm_options_data', 'inventory_product_data', 'variable_product_options' ];
+            $tab     = sanitize_key( $_GET['wsnm_product_tab'] );
+            $content = sanitize_key( $_GET['wsnm_product_tab_content'] );
+            if ( in_array( $tab, $allowed_tabs, true ) && in_array( $content, $allowed_content, true ) ) {
+                echo sprintf('<script>jQuery(document).ready(function($){$(".%s a").trigger("click");$("html, body").animate({scrollTop: $("#%s").offset().top - 600}, "slow");})</script>', esc_js($tab), esc_js($content));
+            }
         }
     }
 

@@ -255,6 +255,8 @@ class WSNM_HELPER
      */
     public function the_confirmation_email(int $post_id): void
     {
+        if ( get_option('wsnm_subscribe_confirmation_status') === 'disabled' ) return;
+
         $post = get_post($post_id);
         $product = $this->getNotificationSelectedProduct($post->ID);
         $email = get_post_meta($post->ID, 'wsnm_email', true);
@@ -490,6 +492,21 @@ class WSNM_HELPER
     public function is_recaptcha_enabled(): bool {
         if (get_option('wsnm_form_recaptcha_status') == 'enabled') return true;
         return false;
+    }
+
+    /**
+     * get_button_display
+     *
+     * Returns where the subscribe button should be shown.
+     * Possible values: 'both' | 'single' | 'shop' | 'disabled'
+     *
+     * @return string
+     */
+    public function get_button_display(): string
+    {
+        $value = get_option('wsnm_button_display', 'both');
+        if ( in_array( $value, [ 'both', 'single', 'shop', 'disabled' ], true ) ) return $value;
+        return 'both';
     }
 
     public function get_mode()

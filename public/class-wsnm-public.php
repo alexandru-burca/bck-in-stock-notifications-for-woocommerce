@@ -14,14 +14,23 @@ class WSNM_Woo_Stock_Notify_Me_Public
     public $helper;
 
     /**
+     * integrations
+     *
+     * @var WSNM_Integrations
+     */
+    public $integrations;
+
+    /**
      * __construct
      *
-     * @param  mixed $helper
+     * @param  mixed             $helper
+     * @param  WSNM_Integrations $integrations
      * @return void
      */
-    public function __construct($helper)
+    public function __construct( $helper, WSNM_Integrations $integrations )
     {
-        $this->helper = $helper;
+        $this->helper       = $helper;
+        $this->integrations = $integrations;
     }
 
     /**
@@ -33,17 +42,11 @@ class WSNM_Woo_Stock_Notify_Me_Public
     {
         wp_enqueue_style(WSNM_DOMAIN, WSNM_URL . 'public/css/wsnm.css', array(), filemtime(WSNM_PATH . 'public/css/wsnm.css'));
         wp_enqueue_script(WSNM_DOMAIN, WSNM_URL . 'public/js/wsnm.js', array('jquery'), filemtime(WSNM_PATH . 'public/js/wsnm.js'));
-        wp_localize_script(WSNM_DOMAIN, 'ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
-    }
-    
-    /**
-     * recaptcha_resources
-     *
-     * @return void
-     */
-    public function recaptcha_resources(){
-        if($this->helper->is_recaptcha_enabled()){
-            echo '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
+
+        wp_localize_script( WSNM_DOMAIN, 'ajax_object', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
+
+        if ( $this->helper->is_recaptcha_enabled() ) {
+            wp_enqueue_script( 'google-recaptcha', 'https://www.google.com/recaptcha/api.js', array(), null, false );
         }
     }
 
@@ -108,14 +111,21 @@ class WSNM_Woo_Stock_Notify_Me_Public
                 if(!isset($_POST['recaptcha'])){
                     $this->ajaxReturn(false, 'reCaptcha - Please check \'I am not a robot\'', 'recaptcha-issue');
                 }
-                $url = sprintf( 
-                    "https://www.google.com/recaptcha/api/siteverify?secret=%s&response=%s&remoteip=%s", 
-                    urlencode(get_option( 'wsnm_recaptcha_secret_key' )), 
-                    urlencode(sanitize_text_field($_POST['recaptcha'])), 
-                    urlencode($_SERVER['REMOTE_ADDR'])
+                $recaptcha_response = wp_remote_post(
+                    'https://www.google.com/recaptcha/api/siteverify',
+                    array(
+                        'timeout' => 5,
+                        'body'    => array(
+                            'secret'   => get_option( 'wsnm_recaptcha_secret_key' ),
+                            'response' => sanitize_text_field( $_POST['recaptcha'] ),
+                            'remoteip' => sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' ),
+                        ),
+                    )
                 );
-                $result = json_decode(file_get_contents($url), TRUE);
-                if( $result['success'] != 1 ){
+                $result = ( ! is_wp_error( $recaptcha_response ) )
+                    ? json_decode( wp_remote_retrieve_body( $recaptcha_response ), true )
+                    : array( 'success' => false );
+                if( empty( $result['success'] ) || $result['success'] != 1 ){
                     $this->ajaxReturn(false, 'reCaptcha - Please check \'I am not a robot\'', 'recaptcha-issue');
                 }
             }else{
@@ -172,6 +182,7 @@ class WSNM_Woo_Stock_Notify_Me_Public
             );
             if ($post_id) {
                 $this->helper->the_confirmation_email($post_id);
+                $this->integrations->push_to_hubspot( $meta, $post_id );
                 $this->ajaxReturn(true, __('Notification set! Thank you!', 'back-in-stock-notifications-for-woocommerce'), 'success');
             }
             $this->ajaxReturn(false, __('Something went wrong', 'back-in-stock-notifications-for-woocommerce'), 'something-wrong');
@@ -189,6 +200,11 @@ class WSNM_Woo_Stock_Notify_Me_Public
      */
     public function prepare_cta($availability, $obj)
     {
+        if ( ! is_product() ) return $availability;
+
+        $display = $this->helper->get_button_display();
+        if ( $display === 'disabled' || $display === 'shop' ) return $availability;
+
         global $product;
         if (empty($product)) return $availability;
         
@@ -235,7 +251,7 @@ class WSNM_Woo_Stock_Notify_Me_Public
         $name_status = $this->helper->get_first_last_name_status();
         $colors = $this->helper->get_button_colors();
         $recaptcha_key = $data['recaptcha_key'] = get_option('wsnm_recaptcha_site_key');
-        $recatpcha_status = $data['recaptcha_status'] = $this->helper->is_recaptcha_enabled();
+        $recaptcha_status = $data['recaptcha_status'] = $this->helper->is_recaptcha_enabled();
         ob_start();
         require_once WSNM_PATH . 'public/parts/form-modal.php';
         $data['content'] = ob_get_clean();
@@ -243,8 +259,38 @@ class WSNM_Woo_Stock_Notify_Me_Public
     }
 
     /**
+     * loop_cta
+     *
+     * Renders the subscribe CTA button on product tiles in shop/archive loops.
+     *
+     * @return void
+     */
+    public function loop_cta()
+    {
+        $display = $this->helper->get_button_display();
+        if ( $display === 'disabled' || $display === 'single' ) return;
+
+        global $product;
+        if ( empty( $product ) || ! is_a( $product, 'WC_Product' ) ) return;
+        if ( ! ( $product->is_type('simple') || $product->is_type('variable') ) ) return;
+        if ( $product->is_in_stock() ) return;
+        if ( $this->helper->is_product_paused( $product->get_id() ) ) return;
+
+        $nonce  = wp_create_nonce('wsnm-popup-form');
+        $colors = $this->helper->get_button_colors();
+        printf(
+            '<div class="wsnm-cta" data-product="%s" data-nonce="%s" style="background-color:%s; color:%s;">%s</div>',
+            esc_attr( $product->get_id() ),
+            esc_attr( $nonce ),
+            esc_attr( $colors['background'] ),
+            esc_attr( $colors['text'] ),
+            esc_html( apply_filters( 'wsnm-text-cta', __( 'Subscribe', 'back-in-stock-notifications-for-woocommerce' ) ) )
+        );
+    }
+
+    /**
      * modify_cta_text
-     * 
+     *
      * @param  mixed $text
      * @return string
      */
@@ -256,7 +302,7 @@ class WSNM_Woo_Stock_Notify_Me_Public
 
     /**
      * modify_modal_title
-     * 
+     *
      * @param  mixed $text
      * @return string
      */
@@ -265,4 +311,5 @@ class WSNM_Woo_Stock_Notify_Me_Public
         $text = $this->helper->get_modal_title();
         return $text;
     }
+
 }

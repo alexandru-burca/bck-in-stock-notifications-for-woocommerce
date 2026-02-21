@@ -18,6 +18,13 @@ class WSNM_Woo_Stock_Notify_Me
     public $helper;
 
     /**
+     * integrations
+     *
+     * @var WSNM_Integrations
+     */
+    protected $integrations;
+
+    /**
      * Define the core functionality of the plugin.
      *
      */
@@ -75,6 +82,11 @@ class WSNM_Woo_Stock_Notify_Me
         require_once WSNM_PATH . 'admin/class-wsnm-admin-settings.php';
 
         /**
+         * The class responsible for all third-party integrations (HubSpot, etc.).
+         */
+        require_once WSNM_PATH . 'admin/class-wsnm-integrations.php';
+
+        /**
          * The class responsible for defining all actions that occur in the public area.
          */
         require_once WSNM_PATH . 'public/class-wsnm-public.php';
@@ -106,7 +118,8 @@ class WSNM_Woo_Stock_Notify_Me
      */
     private function define_admin_hooks()
     {
-        $plugin_admin = new WSNM_Woo_Stock_Notify_Me_Admin($this->helper);
+        $this->integrations    = new WSNM_Integrations( $this->helper );
+        $plugin_admin          = new WSNM_Woo_Stock_Notify_Me_Admin($this->helper);
         $plugin_admin_settings = new WSNM_Woo_Stock_Notify_Me_Admin_Settings($this->helper);
 
         if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
@@ -131,10 +144,20 @@ class WSNM_Woo_Stock_Notify_Me
 
             //WSNM_Woo_Stock_Notify_Me_Admin_Settings Actions
             $this->loader->add_action('admin_menu', $plugin_admin_settings, 'settings_menu');
+            $this->loader->add_action('admin_menu', $plugin_admin_settings, 'preview_menu');
+            $this->loader->add_action('admin_menu', $plugin_admin_settings, 'test_email_menu');
             $this->loader->add_action('init', $plugin_admin_settings, 'save_settings');
             $this->loader->add_action('admin_notices', $plugin_admin_settings, 'save_settings_notice');
             $this->loader->add_action('after_setup_theme', $plugin_admin_settings, 'tinyMCE_theme_setup');
             $this->loader->add_action('admin_enqueue_scripts', $plugin_admin_settings, 'enqueue_color_picker');
+            $this->loader->add_action('admin_enqueue_scripts', $plugin_admin_settings, 'enqueue_preview_resources');
+            $this->loader->add_action('admin_enqueue_scripts', $plugin_admin_settings, 'enqueue_test_email_resources');
+            $this->loader->add_action('wp_ajax_wsnm_get_variations', $plugin_admin_settings, 'ajax_get_variations');
+            $this->loader->add_action('wp_ajax_wsnm_send_test_email', $plugin_admin_settings, 'ajax_send_test_email');
+
+            //WSNM_Integrations Actions
+            $this->loader->add_action('admin_enqueue_scripts', $this->integrations, 'enqueue_admin_scripts');
+            $this->loader->add_action('wp_ajax_wsnm_hubspot_check_connection', $this->integrations, 'check_hubspot_connection');
 
             //WSNM_SCHEDULER Actions
             $this->loader->add_action('init', $this->helper->scheduler, 'schedule_action');
@@ -157,7 +180,7 @@ class WSNM_Woo_Stock_Notify_Me
     private function define_public_hooks()
     {
 
-        $plugin_public = new WSNM_Woo_Stock_Notify_Me_Public($this->helper);
+        $plugin_public = new WSNM_Woo_Stock_Notify_Me_Public( $this->helper, $this->integrations );
 
         if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
             $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_resources');
@@ -165,7 +188,7 @@ class WSNM_Woo_Stock_Notify_Me
             $this->loader->add_action('wp_ajax_nopriv_wsnm_open_popup', $plugin_public, 'generate_popup');
             $this->loader->add_action('wp_ajax_wsnm_save_request', $plugin_public, 'save_request');
             $this->loader->add_action('wp_ajax_nopriv_wsnm_save_request', $plugin_public, 'save_request');
-            $this->loader->add_action('wp_head', $plugin_public, 'recaptcha_resources');
+            $this->loader->add_action('woocommerce_after_shop_loop_item', $plugin_public, 'loop_cta', 15);
             $this->loader->add_filter('woocommerce_get_availability', $plugin_public, 'prepare_cta', 100, 2);
             $this->loader->add_filter('wsnm-text-cta', $plugin_public, 'modify_cta_text', 10, 1);
             $this->loader->add_filter('wsnm-modal-title', $plugin_public, 'modify_modal_title', 10, 1);

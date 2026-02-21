@@ -23,7 +23,7 @@
                 <div class="wsnm-modal-row">
                     <input type="email" name="wsnm_form_email" placeholder="<?php _e('Enter Your Email ...', 'back-in-stock-notifications-for-woocommerce'); ?>" value="" required>
                 </div>
-                <?php if($recatpcha_status): ?>
+                <?php if($recaptcha_status): ?>
                     <div class="wsnm-modal-row">
                         <div id="ligh-recaptcha-id"></div>
                     </div>

@@ -15,6 +15,7 @@ class WSNM_Woo_Stock_Notify_Me_Activator{
      */
     public static function activate(){
         self::create_table();
+        update_option( 'wsnm_db_version', '1.1' );
     }
 
     public static function create_table(){
@@ -26,8 +27,8 @@ class WSNM_Woo_Stock_Notify_Me_Activator{
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             product_id bigint(20) NOT NULL,
             status tinyint(1) DEFAULT 0 NOT NULL,
-            created_time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-            complete_time datetime DEFAULT '0000-00-00 00:00:00',
+            created_time datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            complete_time datetime NULL DEFAULT NULL,
             PRIMARY KEY  (id)
         ) $charset_collate;";
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );

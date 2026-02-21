@@ -1,17 +1,26 @@
 .wsnm-tab-wrapper{
     height: 60px;
     background-color: #fff;
-    font-size: 14px; 
+    font-size: 14px;
     margin: 0 0 20px 0;
     padding: 0 20px;
+    display: flex;
+    align-items: center;
+    img{
+        height: 32px;
+        width: auto;
+        margin-right: 20px;
+    }
     a{
         &.tab{
-            border-bottom: 2px solid #fff;
+            border-bottom: 2px solid transparent;
             box-shadow: none;
             color: #666;
-            display: inline-block;
-            padding: 20px 0 18px 0;
+            display: flex;
+            align-items: center;
+            padding: 0;
             text-decoration: none;
+            height: 100%;
             &:not(:last-child){
                 margin-right: 30px;
             }
@@ -22,7 +31,17 @@
                 border-bottom: 2px solid #191E23;
             }
             &.wsnm-documentation{
-                float: right;
+                margin-left: auto;
+                &:after{
+                    content: "\f504";
+                    font-family: dashicons;
+                    vertical-align: middle;
+                    font-size: 14px;
+                    color: #2271b1;
+                    margin-left: 5px;
+                }
+            }
+            &.wsnm-support{
                 &:after{
                     content: "\f504";
                     font-family: dashicons;
@@ -41,7 +60,69 @@
 }
 .wsnm-content{
     padding: 20px;
-    max-width: 780px;
+}
+.wsnm-page-layout{
+    display: flex;
+    gap: 60px;
+    align-items: flex-start;
+    @media (max-width: 960px) {
+        flex-direction: column;
+        gap: 30px;
+    }
+}
+.wsnm-main{
+    flex: 1;
+    max-width: 720px;
+    min-width: 0;
+    @media (max-width: 960px) {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+.wsnm-sidebar{
+    width: 260px;
+    flex-shrink: 0;
+    @media (max-width: 960px) {
+        width: 100%;
+    }
+    .wsnm-help-box{
+        background: #fff;
+        border: 1px solid #dcdcde;
+        border-radius: 2px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        h4{
+            margin: 0 0 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #1d2327;
+        }
+        p{
+            margin: 0 0 7px;
+            font-size: 12px;
+            color: #50575e;
+            line-height: 1.65;
+            &:last-child{ margin-bottom: 0; }
+        }
+        ul, ol{
+            margin: 4px 0 0 16px;
+            padding: 0;
+            li{
+                font-size: 12px;
+                color: #50575e;
+                line-height: 1.65;
+                margin-bottom: 4px;
+            }
+        }
+        code{
+            font-size: 11px;
+            background: #f0f0f1;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+    }
 }
 .wsnm-settings-row{
     margin-bottom: 30px;

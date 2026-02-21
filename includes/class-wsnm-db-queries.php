@@ -48,8 +48,10 @@ class WSNM_DB_Queries{
     public function get_incomplete_actions(){
         global $wpdb;
 		$dbName = $wpdb->prefix.$this->table_name;
-        $actions = $wpdb->get_results("SELECT * from {$dbName} WHERE status = 0");
-        return $actions;
+        $result = $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM {$dbName} WHERE status = %d", 0)
+        );
+        return $result;
     }
 
     public function mark_action_as_complete($id){
