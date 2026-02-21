@@ -137,6 +137,9 @@ class WSNM_Woo_Stock_Notify_Me_Admin_Settings
                 'url' => 'https://wordpress.org/support/plugin/back-in-stock-notifications-for-woocommerce/'
             )
         );
+        if ( ! array_key_exists( $active_tab, $tabs ) || ! isset( $tabs[$active_tab]['callback'] ) ) {
+            $active_tab = 'wsnm-settings-general';
+        }
         $callback = $tabs[$active_tab]['callback'];
         require_once WSNM_PATH . 'admin/parts/settings-page-header.php';
         $this->$callback();

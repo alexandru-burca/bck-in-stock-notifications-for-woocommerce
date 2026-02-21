@@ -19,7 +19,7 @@ class WSNM_DB_Queries{
         global $wpdb;
 		$dbName = $wpdb->prefix.$this->table_name;
         $result = $wpdb->get_results(
-			$wpdb->prepare("SELECT * from {$dbName} WHERE product_id = %s AND status = 0", $product_id)
+			$wpdb->prepare("SELECT * from {$dbName} WHERE product_id = %d AND status = 0", $product_id)
 		);
 		if(!count($result)){
             $wpdb->insert( 
@@ -37,7 +37,7 @@ class WSNM_DB_Queries{
         global $wpdb;
 		$dbName = $wpdb->prefix.$this->table_name;
         $result = $wpdb->get_results(
-			$wpdb->prepare("SELECT * from {$dbName} WHERE product_id = %s AND status = 0", $product_id)
+			$wpdb->prepare("SELECT * from {$dbName} WHERE product_id = %d AND status = 0", $product_id)
 		);
         if(count($result)){
             return true;

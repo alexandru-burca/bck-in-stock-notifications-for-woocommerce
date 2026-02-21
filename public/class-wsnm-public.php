@@ -40,6 +40,8 @@ class WSNM_Woo_Stock_Notify_Me_Public
      */
     public function enqueue_resources()
     {
+        if ( ! is_woocommerce() && ! is_product() ) return;
+
         wp_enqueue_style(WSNM_DOMAIN, WSNM_URL . 'public/css/wsnm.css', array(), filemtime(WSNM_PATH . 'public/css/wsnm.css'));
         wp_enqueue_script(WSNM_DOMAIN, WSNM_URL . 'public/js/wsnm.js', array('jquery'), filemtime(WSNM_PATH . 'public/js/wsnm.js'));
 

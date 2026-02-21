@@ -96,6 +96,25 @@ The plugin exposes the following filters:
 * `wsnm-modal-title` – Override the modal header text
 * `wsnm-modal-form-button` – Override the submit button text inside the modal
 
+= External Services =
+This plugin optionally connects to the following third-party services. These connections are only made when you explicitly enable the corresponding integration in **Settings → Integrations**.
+
+**Google reCAPTCHA v2** (optional)
+Used to verify that subscription form submissions are made by a human. When enabled, the reCAPTCHA script is loaded from Google's servers and the form response is verified against Google's API.
+
+* Service: [Google reCAPTCHA](https://www.google.com/recaptcha/)
+* Data sent: user's reCAPTCHA response token and IP address
+* Privacy Policy: [https://policies.google.com/privacy](https://policies.google.com/privacy)
+* Terms of Service: [https://policies.google.com/terms](https://policies.google.com/terms)
+
+**HubSpot** (optional)
+Used to automatically create or update a CRM contact when someone subscribes. Subscriber name, email, and the subscribed product name are sent to HubSpot.
+
+* Service: [HubSpot CRM API](https://developers.hubspot.com/)
+* Data sent: subscriber email address, first name, last name, subscribed product name
+* Privacy Policy: [https://legal.hubspot.com/privacy-policy](https://legal.hubspot.com/privacy-policy)
+* Terms of Service: [https://legal.hubspot.com/terms-of-service](https://legal.hubspot.com/terms-of-service)
+
 == Installation ==
 1. Upload `back-in-stock-notifications-for-woocommerce` to the `/wp-content/plugins/` directory
 2. Activate the plugin through the **Plugins** menu in WordPress

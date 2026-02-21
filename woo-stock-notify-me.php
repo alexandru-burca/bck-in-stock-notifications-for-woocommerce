@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name: Back in stock notifications for WooCommerce
- * Plugin URI: https://www.getinnovation.dev/wordpres-plugins/woocommerce-stock-notify-me/
+ * Plugin URI: https://www.getinnovation.dev/
  * Description: Woocommerce subscribe system for out of stock products. 
  * Version: 1.0.2
  * Requires at least: 6.4
